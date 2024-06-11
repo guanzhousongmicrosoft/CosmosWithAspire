@@ -36,7 +36,7 @@ app.MapPut("/todos/{id}", async (string id, Todo todo, CosmosClient cosmosClient
 app.MapDelete("/todos/{userId}/{id}", async (string userId, string id, CosmosClient cosmosClient) =>
 {
     await cosmosClient.GetAppDataContainer().DeleteItemAsync<Todo>(id, new PartitionKey(userId));
-    return Results.Accepted();
+    return Results.Ok();
 });
 
 app.MapDefaultEndpoints();

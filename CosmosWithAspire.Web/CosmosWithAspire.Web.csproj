@@ -7,6 +7,10 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="Refit" Version="7.0.0" />
+  </ItemGroup>
+
+  <ItemGroup>
     <ProjectReference Include="..\CosmosWithAspire.ServiceDefaults\CosmosWithAspire.ServiceDefaults.csproj" />
   </ItemGroup>
 
