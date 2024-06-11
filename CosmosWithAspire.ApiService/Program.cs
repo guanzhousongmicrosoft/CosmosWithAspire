@@ -89,7 +89,6 @@ app.Run();
 
 public record Todo(string Description, bool IsComplete = false)
 {
-    [JsonPropertyName("id")]
     public string id { get; set; } = Guid.NewGuid().ToString();
 }
 
