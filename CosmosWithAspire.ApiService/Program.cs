@@ -1,31 +1,12 @@
 using Microsoft.Azure.Cosmos;
-using NSwag;
-using System.Text.Json.Serialization;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Add service defaults & Aspire components.
 builder.AddServiceDefaults();
-
-// Add services to the container.
 builder.Services.AddProblemDetails();
 builder.Services.AddHostedService<DatabaseBootstrapper>();
-
-// OpenAPI
 builder.Services.AddEndpointsApiExplorer();
-builder.Services.AddOpenApiDocument(options =>
-{
-    options.PostProcess = document =>
-    {
-        document.Info = new OpenApiInfo
-        {
-            Version = "1.0.0",
-            Title = "Cosmos Todos",
-            Description = "Sample Todo app built using Aspire and Azure Cosmos DB.",
-        };
-    };
-});
-
+builder.Services.AddOpenApiDocument();
 builder.AddAzureCosmosClient("cosmos");
 
 var app = builder.Build();
@@ -36,67 +17,46 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUi();
 }
 
-// Configure the HTTP request pipeline.
 app.UseExceptionHandler();
 
-app.MapGet("/", () => "Todo API is up")
-   .Produces(StatusCodes.Status200OK)
-   .WithOpenApi(operation =>
-{
-    operation.Summary = "API Status";
-    operation.OperationId = "getAPIStatus";
-    return operation;
-});
+app.MapPost("/todos", async (Todo todo, CosmosClient cosmosClient) =>
+    (await cosmosClient.GetAppDataContainer().CreateItemAsync<Todo>(todo)).Resource
+);
 
-app.MapPost("/todo", async (Todo todo, CosmosClient cosmosClient) =>
-{
-    var database = cosmosClient.GetDatabase("todos");
-    var incomplete = database.GetContainer("incomplete");
-    var result = await incomplete.CreateItemAsync<Todo>(todo);
-    return result.Resource;
-})
-   .Produces<Todo>(StatusCodes.Status201Created)
-   .WithOpenApi(operation =>
-{
-    operation.Summary = "Creates a new todo item";
-    operation.OperationId = "newTodo";
-    return operation;
-});
-
-app.MapGet("/todos", async (CosmosClient cosmosClient) =>
-{
-    var database = cosmosClient.GetDatabase("todos");
-    var incomplete = database.GetContainer("incomplete");
-    var completed = database.GetContainer("completed");
-
-    var todo = incomplete.GetItemLinqQueryable<Todo>(allowSynchronousQueryExecution: true).ToList();
-    var done = completed.GetItemLinqQueryable<Todo>(allowSynchronousQueryExecution: true).ToList();
-
-    return todo;
-})
-   .Produces<List<Todo>>(StatusCodes.Status200OK)
-   .WithOpenApi(operation =>
-{
-    operation.Summary = "Gets all of the todos in the database";
-    operation.OperationId = "getAllTodos";
-    return operation;
-});
+app.MapGet("/todos", (CosmosClient cosmosClient) =>
+    cosmosClient.GetAppDataContainer().GetItemLinqQueryable<Todo>(allowSynchronousQueryExecution: true).ToList()
+);
 
 app.MapDefaultEndpoints();
 
 app.Run();
 
+// The Todo service model used for transmitting data
 public record Todo(string Description, string id, bool IsComplete = false);
 
+// Background service used to scaffold the Cosmos DB/Container
 public class DatabaseBootstrapper(CosmosClient cosmosClient) : IHostedService
 {
     public async Task StartAsync(CancellationToken cancellationToken)
     {
-        await cosmosClient.CreateDatabaseIfNotExistsAsync("todos");
-        var database = cosmosClient.GetDatabase("todos");
-        await database.CreateContainerIfNotExistsAsync(new ContainerProperties("incomplete", "/default"));
-        await database.CreateContainerIfNotExistsAsync(new ContainerProperties("completed", "/default"));
+        await cosmosClient.CreateDatabaseIfNotExistsAsync("tododb");
+        var database = cosmosClient.GetDatabase("tododb");
+        await database.CreateContainerIfNotExistsAsync(new ContainerProperties("todos", "/default"));
     }
 
     public Task StopAsync(CancellationToken cancellationToken) => Task.CompletedTask;
+}
+
+// Convenience class for reusing boilerplate code
+public static class CosmosClientTodoAppExtensions
+{
+    public static Container GetAppDataContainer(this CosmosClient cosmosClient)
+    {
+        var database = cosmosClient.GetDatabase("tododb");
+        var todos = database.GetContainer("todos");
+
+        if(todos == null) throw new ApplicationException("Cosmos DB collection missing.");
+
+        return todos;
+    }
 }
