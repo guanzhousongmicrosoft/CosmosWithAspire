@@ -27,6 +27,10 @@ app.MapGet("/todos", (CosmosClient cosmosClient) =>
     cosmosClient.GetAppDataContainer().GetItemLinqQueryable<Todo>(allowSynchronousQueryExecution: true).ToList()
 );
 
+app.MapPut("/todos/{id}", async (string id, Todo todo, CosmosClient cosmosClient) =>
+    (await cosmosClient.GetAppDataContainer().ReplaceItemAsync<Todo>(todo, id)).Resource
+);
+
 app.MapDefaultEndpoints();
 
 app.Run();
