@@ -48,12 +48,11 @@ app.MapGet("/", () => "Todo API is up")
     return operation;
 });
 
-app.MapPost("/todo", async (string todoDescription, CosmosClient cosmosClient) =>
+app.MapPost("/todo", async (Todo todo, CosmosClient cosmosClient) =>
 {
-    var database = cosmosClient.GetDatabase("tododatabase");
+    var database = cosmosClient.GetDatabase("todos");
     var incomplete = database.GetContainer("incomplete");
-    var newTodo = new Todo(todoDescription, false);
-    var result = await incomplete.CreateItemAsync<Todo>(newTodo);
+    var result = await incomplete.CreateItemAsync<Todo>(todo);
     return result.Resource;
 })
    .Produces<Todo>(StatusCodes.Status201Created)
@@ -66,7 +65,7 @@ app.MapPost("/todo", async (string todoDescription, CosmosClient cosmosClient) =
 
 app.MapGet("/todos", async (CosmosClient cosmosClient) =>
 {
-    var database = cosmosClient.GetDatabase("tododatabase");
+    var database = cosmosClient.GetDatabase("todos");
     var incomplete = database.GetContainer("incomplete");
     var completed = database.GetContainer("completed");
 
@@ -87,17 +86,14 @@ app.MapDefaultEndpoints();
 
 app.Run();
 
-public record Todo(string Description, bool IsComplete = false)
-{
-    public string id { get; set; } = Guid.NewGuid().ToString();
-}
+public record Todo(string Description, string id, bool IsComplete = false);
 
 public class DatabaseBootstrapper(CosmosClient cosmosClient) : IHostedService
 {
     public async Task StartAsync(CancellationToken cancellationToken)
     {
-        await cosmosClient.CreateDatabaseIfNotExistsAsync("tododatabase");
-        var database = cosmosClient.GetDatabase("tododatabase");
+        await cosmosClient.CreateDatabaseIfNotExistsAsync("todos");
+        var database = cosmosClient.GetDatabase("todos");
         await database.CreateContainerIfNotExistsAsync(new ContainerProperties("incomplete", "/default"));
         await database.CreateContainerIfNotExistsAsync(new ContainerProperties("completed", "/default"));
     }
