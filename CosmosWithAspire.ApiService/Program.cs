@@ -19,10 +19,12 @@ if (app.Environment.IsDevelopment())
 
 app.UseExceptionHandler();
 
+// create new todos
 app.MapPost("/todos", async (Todo todo, CosmosClient cosmosClient) =>
     (await cosmosClient.GetAppDataContainer().CreateItemAsync<Todo>(todo)).Resource
 );
 
+// get all the todos
 app.MapGet("/todos", (CosmosClient cosmosClient) =>
     cosmosClient.GetAppDataContainer().GetItemLinqQueryable<Todo>(allowSynchronousQueryExecution: true).ToList()
 );
@@ -31,12 +33,22 @@ app.MapPut("/todos/{id}", async (string id, Todo todo, CosmosClient cosmosClient
     (await cosmosClient.GetAppDataContainer().ReplaceItemAsync<Todo>(todo, id)).Resource
 );
 
+app.MapDelete("/todos/{userId}/{id}", async (string userId, string id, CosmosClient cosmosClient) =>
+{
+    await cosmosClient.GetAppDataContainer().DeleteItemAsync<Todo>(id, new PartitionKey(userId));
+    return Results.Accepted();
+});
+
 app.MapDefaultEndpoints();
 
 app.Run();
 
 // The Todo service model used for transmitting data
-public record Todo(string Description, string id, bool IsComplete = false);
+public record Todo(string Description, string id, string UserId, bool IsComplete = false)
+{
+    // partiion the todos by user id
+    internal static string UserIdPartitionKey = "/UserId";
+}
 
 // Background service used to scaffold the Cosmos DB/Container
 public class DatabaseBootstrapper(CosmosClient cosmosClient) : IHostedService
@@ -45,7 +57,7 @@ public class DatabaseBootstrapper(CosmosClient cosmosClient) : IHostedService
     {
         await cosmosClient.CreateDatabaseIfNotExistsAsync("tododb");
         var database = cosmosClient.GetDatabase("tododb");
-        await database.CreateContainerIfNotExistsAsync(new ContainerProperties("todos", "/default"));
+        await database.CreateContainerIfNotExistsAsync(new ContainerProperties("todos", Todo.UserIdPartitionKey));
     }
 
     public Task StopAsync(CancellationToken cancellationToken) => Task.CompletedTask;
