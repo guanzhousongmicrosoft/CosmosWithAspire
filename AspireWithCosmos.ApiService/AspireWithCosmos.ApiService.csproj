@@ -13,7 +13,7 @@
 	</ItemGroup>
 
 	<ItemGroup>
-		<ProjectReference Include="..\CosmosWithAspire.ServiceDefaults\CosmosWithAspire.ServiceDefaults.csproj" />
+		<ProjectReference Include="..\AspireWithCosmos.ServiceDefaults\AspireWithCosmos.ServiceDefaults.csproj" />
 	</ItemGroup>
 
 </Project>

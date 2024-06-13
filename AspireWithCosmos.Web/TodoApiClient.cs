@@ -1,6 +1,6 @@
 using Refit;
 
-namespace CosmosWithAspire.Web;
+namespace AspireWithCosmos.Web;
 
 public interface ITodoApiClient
 {

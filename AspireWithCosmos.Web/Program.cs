@@ -1,5 +1,5 @@
-using CosmosWithAspire.Web;
-using CosmosWithAspire.Web.Components;
+using AspireWithCosmos.Web;
+using AspireWithCosmos.Web.Components;
 
 var builder = WebApplication.CreateBuilder(args);
 

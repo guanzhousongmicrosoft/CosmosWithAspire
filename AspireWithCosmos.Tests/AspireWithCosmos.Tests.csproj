@@ -17,7 +17,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\CosmosWithAspire.AppHost\CosmosWithAspire.AppHost.csproj" />
+    <ProjectReference Include="..\AspireWithCosmos.AppHost\AspireWithCosmos.AppHost.csproj" />
   </ItemGroup>
 
   <ItemGroup>

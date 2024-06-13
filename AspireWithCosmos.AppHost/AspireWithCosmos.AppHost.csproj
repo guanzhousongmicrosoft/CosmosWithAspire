@@ -10,8 +10,8 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\CosmosWithAspire.ApiService\CosmosWithAspire.ApiService.csproj" />
-    <ProjectReference Include="..\CosmosWithAspire.Web\CosmosWithAspire.Web.csproj" />
+    <ProjectReference Include="..\AspireWithCosmos.ApiService\AspireWithCosmos.ApiService.csproj" />
+    <ProjectReference Include="..\AspireWithCosmos.Web\AspireWithCosmos.Web.csproj" />
   </ItemGroup>
 
   <ItemGroup>

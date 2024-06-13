@@ -16,11 +16,6 @@
 else
 {
     <table class="table">
-        <thead>
-            <tr>
-                <th colspan="3"></th>
-            </tr>
-        </thead>
         <tbody>
             @foreach (var todo in todos.Where(_ => _.IsComplete == false))
             {

@@ -1,6 +1,6 @@
 using System.Net;
 
-namespace CosmosWithAspire.Tests;
+namespace AspireWithCosmos.Tests;
 
 public class WebTests
 {
@@ -8,7 +8,7 @@ public class WebTests
     public async Task GetWebResourceRootReturnsOkStatusCode()
     {
         // Arrange
-        var appHost = await DistributedApplicationTestingBuilder.CreateAsync<Projects.CosmosWithAspire_AppHost>();
+        var appHost = await DistributedApplicationTestingBuilder.CreateAsync<Projects.AspireWithCosmos_AppHost>();
         await using var app = await appHost.BuildAsync();
         await app.StartAsync();
 
