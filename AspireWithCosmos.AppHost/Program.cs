@@ -24,14 +24,8 @@ var container = database.AddContainer("todos", "/UserId");
 var apiService = builder.AddProject<Projects.AspireWithCosmos_ApiService>("apiservice")
                         .WithReference(cosmos);
 
-var webApp = builder.AddProject<Projects.AspireWithCosmos_Web>("webfrontend")
+builder.AddProject<Projects.AspireWithCosmos_Web>("webfrontend")
     .WithExternalHttpEndpoints()
     .WithReference(apiService);
-
-// In CI environments, prefer HTTP over HTTPS to avoid certificate issues
-if (isCI)
-{
-    webApp.WithHttpEndpoint(port: 5000, name: "http");
-}
 
 builder.Build().Run();
