@@ -1,0 +1,82 @@
+name: Aspire Tests
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  aspire-tests:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    
+    services:
+      docker:
+        image: docker:24-dind
+        options: --privileged
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+    
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: '9.0.x'
+    
+    - name: Setup Docker Buildx
+      uses: docker/setup-buildx-action@v3
+    
+    - name: Start Docker daemon
+      run: |
+        sudo systemctl start docker
+        sudo chmod 666 /var/run/docker.sock
+        docker --version
+    
+    - name: Pull required Docker images
+      run: |
+        # Pre-pull the Cosmos DB Emulator image to speed up tests
+        docker pull mcr.microsoft.com/cosmosdb/linux/azure-cosmos-emulator:latest || true
+    
+    - name: Restore dependencies
+      run: dotnet restore
+    
+    - name: Build solution
+      run: dotnet build --no-restore --configuration Release
+    
+    - name: Run Aspire tests with Docker
+      run: |
+        # Ensure Docker socket is accessible
+        sudo chmod 666 /var/run/docker.sock
+        
+        # Run tests with extended timeout for container startup
+        dotnet test AspireWithCosmos.Tests \
+          --no-build \
+          --configuration Release \
+          --verbosity normal \
+          --logger trx \
+          --logger "console;verbosity=detailed" \
+          --results-directory TestResults \
+          -- RunConfiguration.TestSessionTimeout=600000
+      env:
+        ASPNETCORE_ENVIRONMENT: Development
+        DOCKER_HOST: unix:///var/run/docker.sock
+        # Aspire-specific environment variables
+        ASPIRE_ALLOW_UNSECURED_TRANSPORT: true
+        DOTNET_DASHBOARD_OTLP_ENDPOINT_URL: ""
+    
+    - name: Upload test results
+      uses: actions/upload-artifact@v4
+      if: always()
+      with:
+        name: aspire-test-results
+        path: TestResults/*.trx
+        retention-days: 7
+    
+    - name: Cleanup Docker containers
+      if: always()
+      run: |
+        # Clean up any running containers from the tests
+        docker ps -q | xargs -r docker stop
+        docker system prune -f || true
