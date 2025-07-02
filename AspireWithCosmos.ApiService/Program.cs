@@ -4,7 +4,6 @@ var builder = WebApplication.CreateBuilder(args);
 
 builder.AddServiceDefaults();
 builder.Services.AddProblemDetails();
-builder.Services.AddHostedService<DatabaseBootstrapper>();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddOpenApiDocument();
 builder.AddAzureCosmosClient("cosmos");
@@ -48,19 +47,6 @@ public record Todo(string Description, string id, string UserId, bool IsComplete
 {
     // partiion the todos by user id
     internal static string UserIdPartitionKey = "/UserId";
-}
-
-// Background service used to scaffold the Cosmos DB/Container
-public class DatabaseBootstrapper(CosmosClient cosmosClient) : IHostedService
-{
-    public async Task StartAsync(CancellationToken cancellationToken)
-    {
-        await cosmosClient.CreateDatabaseIfNotExistsAsync("tododb");
-        var database = cosmosClient.GetDatabase("tododb");
-        await database.CreateContainerIfNotExistsAsync(new ContainerProperties("todos", Todo.UserIdPartitionKey));
-    }
-
-    public Task StopAsync(CancellationToken cancellationToken) => Task.CompletedTask;
 }
 
 // Convenience class for reusing boilerplate code
