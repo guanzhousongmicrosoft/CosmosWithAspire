@@ -21,13 +21,35 @@ This repository includes several GitHub Actions workflows for building, testing,
   - Security vulnerability scanning
   - Detailed test reporting
 
-### 3. `aspire-tests.yml` - Aspire-Specific Testing
+### 3. `aspire-tests.yml` - Aspire-Specific Testing ⭐ **RECOMMENDED**
 - **Triggers**: Push to main/develop, Pull requests to main
 - **Features**:
   - Docker daemon setup for Cosmos DB Emulator
-  - Pre-pulling Docker images
-  - Extended timeouts for container startup
+  - SSL certificate handling for CI environments
+  - Pre-pulling Docker images for faster startup
+  - Extended timeouts for container startup (10 minutes)
   - Docker cleanup after tests
+  - Environment variable configuration for Aspire
+
+## SSL Certificate Handling
+
+The project includes robust SSL certificate handling for both local and CI environments:
+
+### Local Development
+- Uses standard ASP.NET Core development certificates
+- Automatic HTTPS configuration via Aspire
+
+### CI/CD Environment
+- Bypasses SSL certificate validation in test environments
+- Sets `ASPIRE_ALLOW_UNSECURED_TRANSPORT=true` for CI
+- Configures HttpClient to ignore certificate errors
+- Uses environment detection to apply appropriate settings
+
+### Test Configuration
+The test code automatically detects CI environments and configures SSL settings:
+- Checks for `CI`, `GITHUB_ACTIONS`, `BUILD_BUILDID`, `GITLAB_CI` environment variables
+- Applies certificate bypass only in test/CI environments
+- Maintains security in production environments
 
 ## Requirements
 
@@ -41,6 +63,12 @@ This repository includes several GitHub Actions workflows for building, testing,
 - Aspire workload
 
 ## Running Tests Locally
+
+### Quick Start
+```bash
+# Use the provided script for easy local testing
+./scripts/run-tests-local.sh
+```
 
 ### Prerequisites
 ```bash

@@ -45,6 +45,16 @@ jobs:
     - name: Build solution
       run: dotnet build --no-restore --configuration Release
     
+    - name: Setup ASP.NET Core HTTPS development certificates
+      run: |
+        # Clean existing certificates and generate new ones for CI
+        dotnet dev-certs https --clean || true
+        dotnet dev-certs https --trust || true
+        
+        # Set environment to allow insecure connections in CI
+        echo "ASPNETCORE_ENVIRONMENT=Development" >> $GITHUB_ENV
+        echo "ASPIRE_ALLOW_UNSECURED_TRANSPORT=true" >> $GITHUB_ENV
+
     - name: Run Aspire tests with Docker
       run: |
         # Ensure Docker socket is accessible
@@ -65,6 +75,16 @@ jobs:
         # Aspire-specific environment variables
         ASPIRE_ALLOW_UNSECURED_TRANSPORT: true
         DOTNET_DASHBOARD_OTLP_ENDPOINT_URL: ""
+        # SSL/Certificate settings for CI - bypass validation
+        DOTNET_SYSTEM_NET_HTTP_SOCKETSHTTPHANDLER_HTTP2SUPPORT: false
+        ASPNETCORE_URLS: "http://+:5000"
+        ASPNETCORE_HTTPS_PORT: ""
+        # Additional environment variables to bypass SSL issues
+        NODE_TLS_REJECT_UNAUTHORIZED: "0"
+        DOTNET_SSL_CERT_DIR: "/tmp"
+        # GitHub Actions CI indicator
+        CI: true
+        GITHUB_ACTIONS: true
     
     - name: Upload test results
       uses: actions/upload-artifact@v4
